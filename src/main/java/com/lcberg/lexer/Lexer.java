@@ -30,8 +30,15 @@ public class Lexer {
 		this.skipWhitespace();
 		switch (this.ch) {
 			case '=':
-				token = new Token(TokenType.ASSIGN, String.valueOf(this.ch));
-				break;
+				if (this.peekChar() == '=') {
+					char firstChar = this.ch;
+					this.readChar();
+					token = new Token(TokenType.EQUALS, String.valueOf(firstChar) + String.valueOf(this.ch));
+					break;
+				} else {
+					token = new Token(TokenType.ASSIGN, String.valueOf(this.ch));
+					break;
+				}
 			case ';':
 				token = new Token(TokenType.SEMICOLON, String.valueOf(this.ch));
 				break;
@@ -49,6 +56,28 @@ public class Lexer {
 				break;
 			case '-':
 				token = new Token(TokenType.MINUS, String.valueOf(this.ch));
+				break;
+			case '!':
+				if (this.peekChar() == '=') {
+					char firstChar = this.ch;
+					this.readChar();
+					token = new Token(TokenType.NOT_EQUALS, String.valueOf(firstChar) + String.valueOf(this.ch));
+					break;
+				} else {
+					token = new Token(TokenType.BANG, String.valueOf(this.ch));
+					break;
+				}
+			case '*':
+				token = new Token(TokenType.ASTERISK, String.valueOf(this.ch));
+				break;
+			case '/':
+				token = new Token(TokenType.SLASH, String.valueOf(this.ch));
+				break;
+			case '<':
+				token = new Token(TokenType.LESS_THAN, String.valueOf(this.ch));
+				break;
+			case '>':
+				token = new Token(TokenType.GREATER_THAN, String.valueOf(this.ch));
 				break;
 			case '{':
 				token = new Token(TokenType.LBRACE, String.valueOf(this.ch));
@@ -78,6 +107,12 @@ public class Lexer {
 		this.readChar();
 
 		return token;
+	}
+
+	public char peekChar() {
+		if (this.readPosition >= this.input.length())
+			return 0;
+		return this.input.charAt(this.readPosition);
 	}
 
 	// TODO: Support more than integers

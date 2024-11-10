@@ -8,7 +8,12 @@ public class Token {
 
 	private static Map<String, TokenType> keywords = Map.of(
 			"let", TokenType.LET,
-			"fn", TokenType.FUNCTION);
+			"fn", TokenType.FUNCTION,
+			"if", TokenType.IF,
+			"else", TokenType.ELSE,
+			"return", TokenType.RETURN,
+			"true", TokenType.TRUE,
+			"false", TokenType.FALSE);
 
 	public Token(TokenType type, String literal) {
 		this.Type = type;

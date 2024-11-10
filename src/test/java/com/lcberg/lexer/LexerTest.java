@@ -47,6 +47,17 @@ public class LexerTest {
 				};
 
 				let result = add(five, ten);
+				!-/*5;
+				5 < 10 > 5;
+
+				if (5 < 10) {
+					return true;
+				} else {
+					return false;
+				}
+
+				10 == 10;
+				10 != 9;
 				""";
 
 		List<TestCase> testCases = List.of(
@@ -85,6 +96,43 @@ public class LexerTest {
 				new TestCase(TokenType.COMMA, ","),
 				new TestCase(TokenType.IDENT, "ten"),
 				new TestCase(TokenType.RPAREN, ")"),
+				new TestCase(TokenType.SEMICOLON, ";"),
+				new TestCase(TokenType.BANG, "!"),
+				new TestCase(TokenType.MINUS, "-"),
+				new TestCase(TokenType.SLASH, "/"),
+				new TestCase(TokenType.ASTERISK, "*"),
+				new TestCase(TokenType.INT, "5"),
+				new TestCase(TokenType.SEMICOLON, ";"),
+				new TestCase(TokenType.INT, "5"),
+				new TestCase(TokenType.LESS_THAN, "<"),
+				new TestCase(TokenType.INT, "10"),
+				new TestCase(TokenType.GREATER_THAN, ">"),
+				new TestCase(TokenType.INT, "5"),
+				new TestCase(TokenType.SEMICOLON, ";"),
+				new TestCase(TokenType.IF, "if"),
+				new TestCase(TokenType.LPAREN, "("),
+				new TestCase(TokenType.INT, "5"),
+				new TestCase(TokenType.LESS_THAN, "<"),
+				new TestCase(TokenType.INT, "10"),
+				new TestCase(TokenType.RPAREN, ")"),
+				new TestCase(TokenType.LBRACE, "{"),
+				new TestCase(TokenType.RETURN, "return"),
+				new TestCase(TokenType.TRUE, "true"),
+				new TestCase(TokenType.SEMICOLON, ";"),
+				new TestCase(TokenType.RBRACE, "}"),
+				new TestCase(TokenType.ELSE, "else"),
+				new TestCase(TokenType.LBRACE, "{"),
+				new TestCase(TokenType.RETURN, "return"),
+				new TestCase(TokenType.FALSE, "false"),
+				new TestCase(TokenType.SEMICOLON, ";"),
+				new TestCase(TokenType.RBRACE, "}"),
+				new TestCase(TokenType.INT, "10"),
+				new TestCase(TokenType.EQUALS, "=="),
+				new TestCase(TokenType.INT, "10"),
+				new TestCase(TokenType.SEMICOLON, ";"),
+				new TestCase(TokenType.INT, "10"),
+				new TestCase(TokenType.NOT_EQUALS, "!="),
+				new TestCase(TokenType.INT, "9"),
 				new TestCase(TokenType.SEMICOLON, ";"),
 				new TestCase(TokenType.EOF, ""));
 

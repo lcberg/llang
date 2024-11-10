@@ -12,6 +12,13 @@ public enum TokenType {
 	ASSIGN("="),
 	PLUS("+"),
 	MINUS("-"),
+	BANG("!"),
+	ASTERISK("*"),
+	SLASH("/"),
+	LESS_THAN("<"),
+	GREATER_THAN(">"),
+	EQUALS("=="),
+	NOT_EQUALS("!="),
 
 	// DELIMITERS
 	COMMA(","),
@@ -24,7 +31,12 @@ public enum TokenType {
 
 	// KEYWORDS
 	FUNCTION("FUNCTION"),
-	LET("LET");
+	LET("LET"),
+	RETURN("RETURN"),
+	TRUE("TRUE"),
+	FALSE("FALSE"),
+	ELSE("ELSE"),
+	IF("IF");
 
 	public final String label;
 
