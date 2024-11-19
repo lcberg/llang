@@ -15,6 +15,7 @@ public class Repl {
 
 		running = true;
 		while (running) {
+			System.out.print(PROMPT);
 			String input = scanner.nextLine();
 			if (input == null)
 				continue;

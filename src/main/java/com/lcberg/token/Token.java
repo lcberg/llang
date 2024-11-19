@@ -25,4 +25,9 @@ public class Token {
 			return keywords.get(identifier);
 		return TokenType.IDENT;
 	}
+
+	@Override
+	public String toString() {
+		return "[" + Type + "] " + Literal;
+	}
 }
