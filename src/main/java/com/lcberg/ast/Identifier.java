@@ -3,8 +3,13 @@ package com.lcberg.ast;
 import com.lcberg.token.Token;
 
 public class Identifier implements Expression {
-	Token token;
-	String value;
+	public Token token;
+	public String value;
+
+	public Identifier(Token token, String value) {
+		this.token = token;
+		this.value = value;
+	}
 
 	public String expressionNode() {
 		return "";
