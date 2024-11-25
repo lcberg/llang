@@ -1,8 +1,12 @@
 package com.lcberg.parser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.lcberg.ast.Ast;
+import com.lcberg.ast.Expression;
+import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
 import com.lcberg.ast.LetStatement;
 import com.lcberg.ast.ReturnStatement;
@@ -19,12 +23,29 @@ public class Parser {
 	private boolean debug = true;
 	public ArrayList<String> errors;
 
+	private Map<TokenType, PrefixParseFn> prefixParseFns = new HashMap<TokenType, PrefixParseFn>();
+	private Map<TokenType, InfixParseFn> infixParseFns = new HashMap<TokenType, InfixParseFn>();
+
 	public Parser(Lexer lexer) {
 		this.lexer = lexer;
 		this.errors = new ArrayList<String>();
 
+		this.registerPrefix(TokenType.IDENT, this::parseIdentifier);
+
 		NextToken();
 		NextToken();
+	}
+
+	public Expression parseIdentifier() {
+		return new Identifier(this.currentToken, this.currentToken.Literal);
+	}
+
+	public void registerPrefix(TokenType tokenType, PrefixParseFn fn) {
+		this.prefixParseFns.put(tokenType, fn);
+	}
+
+	public void registerInfix(TokenType tokenType, InfixParseFn fn) {
+		this.infixParseFns.put(tokenType, fn);
 	}
 
 	public void NextToken() {
@@ -57,8 +78,27 @@ public class Parser {
 			case RETURN:
 				return parseReturnStatement();
 			default:
-				return null;
+				return parseExpressionStatement();
 		}
+	}
+
+	public ExpressionStatement parseExpressionStatement() {
+		ExpressionStatement statement = new ExpressionStatement(this.currentToken);
+		statement.expression = this.parseExpression(Precedence.LOWEST);
+
+		if (this.peekTokenIs(TokenType.SEMICOLON))
+			this.NextToken();
+
+		return statement;
+	}
+
+	public Expression parseExpression(Precedence precedence) {
+		if (this.prefixParseFns.containsKey(this.currentToken.Type)) {
+			PrefixParseFn fn = this.prefixParseFns.get(this.currentToken.Type);
+			return fn.parse();
+		}
+
+		return null;
 	}
 
 	public ReturnStatement parseReturnStatement() {

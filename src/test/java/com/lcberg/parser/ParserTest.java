@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 
 import com.lcberg.ast.Ast;
+import com.lcberg.ast.ExpressionStatement;
+import com.lcberg.ast.Identifier;
 import com.lcberg.ast.LetStatement;
 import com.lcberg.ast.ReturnStatement;
 import com.lcberg.ast.Statement;
@@ -105,5 +107,23 @@ public class ParserTest {
 			System.err.printf("Parser error: %s \n", error);
 		}
 		fail("Parser had errors");
+	}
+
+	@Test
+	public void TestIdentifierExpression() {
+		String input = "foobar;";
+
+		Lexer lexer = new Lexer(input);
+		Parser parser = new Parser(lexer);
+		Ast ast = parser.ParseProgram();
+		checkParserErrors(parser);
+
+		assertEquals(1, ast.statements.size());
+		assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
+		ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+		assertTrue(expressionStatement.expression instanceof Identifier);
+		Identifier identifier = (Identifier) expressionStatement.expression;
+		assertEquals("foobar", identifier.value);
+		assertEquals("foobar", identifier.TokenLiteral());
 	}
 }
