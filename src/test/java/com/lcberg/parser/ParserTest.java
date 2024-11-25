@@ -8,12 +8,13 @@ import org.junit.jupiter.api.Test;
 
 import com.lcberg.ast.Ast;
 import com.lcberg.ast.LetStatement;
+import com.lcberg.ast.ReturnStatement;
 import com.lcberg.ast.Statement;
 import com.lcberg.lexer.Lexer;
 
 public class ParserTest {
 	@Test
-	public void TestLetStatement() {
+	public void TestLetStatements() {
 		String input = """
 						let x = 5;
 						let y = 10;
@@ -24,6 +25,8 @@ public class ParserTest {
 		Parser parser = new Parser(lexer);
 
 		Ast ast = parser.ParseProgram();
+
+		checkParserErrors(parser);
 
 		if (ast == null) {
 			fail("ParseProgram() returned null");
@@ -63,6 +66,44 @@ public class ParserTest {
 		}
 
 		return true;
+	}
 
+	@Test
+	public void testReturnStatements() {
+		String input = """
+					return 5;
+					return 10;
+					return 993322;
+				""";
+
+		Lexer lexer = new Lexer(input);
+		Parser parser = new Parser(lexer);
+
+		Ast ast = parser.ParseProgram();
+
+		checkParserErrors(parser);
+
+		if (ast == null) {
+			fail("ParseProgram() returned null");
+		}
+		assertEquals(ast.statements.size(), 3,
+				"ast.statements does not contain 3 statements. got " + ast.statements.size());
+
+		for (Statement statement : ast.statements) {
+			assertTrue(statement instanceof ReturnStatement, "Statement not Returnstatement, got " + statement);
+			assertEquals(statement.TokenLiteral(), "return",
+					"ReturnStatement TokenLiteral not return, got " + statement.TokenLiteral());
+		}
+	}
+
+	public void checkParserErrors(Parser parser) {
+		if (parser.errors.size() == 0)
+			return;
+
+		System.err.printf("Parser has %d errors", parser.errors.size());
+		for (String error : parser.errors) {
+			System.err.printf("Parser error: %s \n", error);
+		}
+		fail("Parser had errors");
 	}
 }

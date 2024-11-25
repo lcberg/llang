@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.lcberg.ast.Ast;
 import com.lcberg.ast.Identifier;
 import com.lcberg.ast.LetStatement;
+import com.lcberg.ast.ReturnStatement;
 import com.lcberg.ast.Statement;
 import com.lcberg.lexer.Lexer;
 import com.lcberg.token.Token;
@@ -15,11 +16,12 @@ public class Parser {
 
 	private Token currentToken;
 	private Token peekToken;
-
 	private boolean debug = true;
+	public ArrayList<String> errors;
 
 	public Parser(Lexer lexer) {
 		this.lexer = lexer;
+		this.errors = new ArrayList<String>();
 
 		NextToken();
 		NextToken();
@@ -52,9 +54,22 @@ public class Parser {
 		switch (this.currentToken.Type) {
 			case LET:
 				return parseLetStatement();
+			case RETURN:
+				return parseReturnStatement();
 			default:
 				return null;
 		}
+	}
+
+	public ReturnStatement parseReturnStatement() {
+		ReturnStatement returnStatement = new ReturnStatement(this.currentToken);
+		NextToken();
+
+		// TODO: were skipping the expression until we encounter a semicolon
+		while (!currentTokenIs(TokenType.SEMICOLON)) {
+			NextToken();
+		}
+		return returnStatement;
 	}
 
 	public LetStatement parseLetStatement() {
@@ -70,7 +85,7 @@ public class Parser {
 			return null;
 		}
 
-		// TODO: Were skipping the expressions until we encounter a semicolon;
+		// TODO: Were skipping the expressions until we encounter a semicolon
 		while (!currentTokenIs(TokenType.SEMICOLON)) {
 			NextToken();
 		}
@@ -91,8 +106,14 @@ public class Parser {
 			NextToken();
 			return true;
 		} else {
+			peekError(type);
 			return false;
 		}
+	}
+
+	public void peekError(TokenType tokenType) {
+		String message = String.format("Expected next token to be %s, got %s instead.", tokenType, this.peekToken.Type);
+		this.errors.add(message);
 	}
 
 }
