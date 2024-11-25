@@ -38,7 +38,7 @@ public class Parser {
 		Ast ast = new Ast();
 		ast.statements = new ArrayList<Statement>();
 
-		while (this.currentToken.Type != TokenType.EOF) {
+		while (!currentTokenIs(TokenType.EOF)) {
 			Statement statement = parseStatement();
 			if (statement != null) {
 				ast.statements.add(statement);
