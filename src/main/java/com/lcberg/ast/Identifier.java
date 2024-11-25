@@ -18,4 +18,8 @@ public class Identifier implements Expression {
 	public String TokenLiteral() {
 		return token.Literal;
 	}
+
+	public String String() {
+		return this.value;
+	}
 }

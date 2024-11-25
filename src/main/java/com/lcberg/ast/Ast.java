@@ -14,4 +14,12 @@ public class Ast {
 			return statements.getFirst().TokenLiteral();
 		return "";
 	}
+
+	public String String() {
+		StringBuilder sb = new StringBuilder();
+		for (Statement statement : statements) {
+			sb.append(statement.String());
+		}
+		return sb.toString();
+	}
 }

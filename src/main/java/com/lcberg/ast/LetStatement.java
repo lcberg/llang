@@ -18,4 +18,20 @@ public class LetStatement implements Statement {
 	public String TokenLiteral() {
 		return token.Literal;
 	}
+
+	public String String() {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(TokenLiteral());
+		sb.append(" ");
+		sb.append(this.name.String());
+		sb.append(" = ");
+
+		if (this.value != null) {
+			sb.append(this.value.String());
+		}
+		sb.append(";");
+
+		return sb.toString();
+	}
 }
