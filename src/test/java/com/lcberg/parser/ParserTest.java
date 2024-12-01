@@ -214,4 +214,31 @@ public class ParserTest {
 			testIntegerLiteral(infixExpression.right, testCase.rightValue());
 		}
 	}
+
+	@Test
+	public void testOperatorPrecedenceParsing() {
+		record TestCase(String input, String expected) {
+		}
+		List<TestCase> testCases = List.of(
+				new TestCase("-a * b", "((-a) * b)"),
+				new TestCase("!-a", "(!(-a))"),
+				new TestCase("a + b + c", "((a + b) + c)"),
+				new TestCase("a + b - c", "((a + b) - c)"),
+				new TestCase("a * b * c", "((a * b) * c)"),
+				new TestCase("a * b / c", "((a * b) / c)"),
+				new TestCase("a + b / c", "(a + (b / c))"),
+				new TestCase("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+				new TestCase("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+				new TestCase("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
+				new TestCase("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"));
+
+		for (TestCase testCase : testCases) {
+			Lexer lexer = new Lexer(testCase.input());
+			Parser parser = new Parser(lexer);
+			Ast ast = parser.ParseProgram();
+			checkParserErrors(parser);
+
+			assertEquals(ast.String(), testCase.expected());
+		}
+	}
 }

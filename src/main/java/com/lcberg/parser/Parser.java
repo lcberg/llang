@@ -65,6 +65,11 @@ public class Parser {
 		NextToken();
 	}
 
+	// Takes in the left side of an expression (everything is an expression even a
+	// 5)
+	// and creates an infix expression with left, right and operator
+	// this advances the token to the end of the whole expression (since an infix
+	// expression has 3 expression tokens)
 	public InfixExpression parseInfixExpression(Expression left) {
 		InfixExpression infixExpression = new InfixExpression(this.currentToken, this.currentToken.Literal, left);
 
@@ -73,6 +78,24 @@ public class Parser {
 		infixExpression.right = this.parseExpression(precedence);
 
 		return infixExpression;
+	}
+
+	// handles both minus and ! as prefixes
+	// also handles non existing prefixes Expressions without a leading operator
+	// (like identifiers or integers)
+	// Advances Token to
+	public PrefixExpression parsePrefixExpression() {
+		PrefixExpression prefixExpression = new PrefixExpression(this.currentToken, this.currentToken.Literal);
+
+		this.NextToken();
+
+		prefixExpression.right = parseExpression(Precedence.PREFIX);
+		return prefixExpression;
+	}
+
+	public void noPrefixParseFnError(TokenType tokenType) {
+		String message = String.format("No prefix parse function for %s found", tokenType);
+		this.errors.add(message);
 	}
 
 	public Precedence peekPrecedence() {
@@ -91,31 +114,9 @@ public class Parser {
 		return Precedence.LOWEST;
 	}
 
-	// handles both minus and ! as prefixes
-	public PrefixExpression parsePrefixExpression() {
-		PrefixExpression prefixExpression = new PrefixExpression(this.currentToken, this.currentToken.Literal);
-
-		this.NextToken();
-
-		prefixExpression.right = parseExpression(Precedence.PREFIX);
-		return prefixExpression;
-	}
-
-	public void noPrefixParseFnError(TokenType tokenType) {
-		String message = String.format("No prefix parse function for %s found", tokenType);
-		this.errors.add(message);
-	}
-
+	// Idenfiers are expressions to - do they have feelings as well?
 	public Expression parseIdentifier() {
 		return new Identifier(this.currentToken, this.currentToken.Literal);
-	}
-
-	public void registerPrefix(TokenType tokenType, PrefixParseFn fn) {
-		this.prefixParseFns.put(tokenType, fn);
-	}
-
-	public void registerInfix(TokenType tokenType, InfixParseFn fn) {
-		this.infixParseFns.put(tokenType, fn);
 	}
 
 	public void NextToken() {
@@ -125,20 +126,6 @@ public class Parser {
 		if (debug) {
 			System.out.println("CurrentToken " + currentToken + ", peekToken: " + peekToken);
 		}
-	}
-
-	public Ast ParseProgram() {
-		Ast ast = new Ast();
-		ast.statements = new ArrayList<Statement>();
-
-		while (!currentTokenIs(TokenType.EOF)) {
-			Statement statement = parseStatement();
-			if (statement != null) {
-				ast.statements.add(statement);
-			}
-			NextToken();
-		}
-		return ast;
 	}
 
 	public Statement parseStatement() {
@@ -156,12 +143,15 @@ public class Parser {
 		ExpressionStatement statement = new ExpressionStatement(this.currentToken);
 		statement.expression = this.parseExpression(Precedence.LOWEST);
 
-		if (this.peekTokenIs(TokenType.SEMICOLON))
+		if (this.peekTokenIs(TokenType.SEMICOLON)) // Semicolons are not part of the AST
 			this.NextToken();
 
 		return statement;
 	}
 
+	// start with parsing the first token as a prefix (or nonfix expression) and if
+	// there is more (no smicolon or binding of following token is higher) create an
+	// infix expression with it
 	public Expression parseExpression(Precedence precedence) {
 		if (!this.prefixParseFns.containsKey(this.currentToken.Type)) {
 			this.noPrefixParseFnError(this.currentToken.Type);
@@ -174,10 +164,10 @@ public class Parser {
 			if (this.infixParseFns.containsKey(this.peekToken.Type)) {
 				InfixParseFn infix = this.infixParseFns.get(this.peekToken.Type);
 				this.NextToken();
-				left = infix.parse(left);
-
+				left = infix.parse(left); // current expression will be left side of the infix expression, if next token
+											// does not have precedence
 			} else
-				return left;
+				return left; // will return the current expression if at "end" of infix Expression
 		}
 
 		return left;
@@ -250,4 +240,25 @@ public class Parser {
 		this.errors.add(message);
 	}
 
+	public Ast ParseProgram() {
+		Ast ast = new Ast();
+		ast.statements = new ArrayList<Statement>();
+
+		while (!currentTokenIs(TokenType.EOF)) {
+			Statement statement = parseStatement();
+			if (statement != null) {
+				ast.statements.add(statement);
+			}
+			NextToken();
+		}
+		return ast;
+	}
+
+	public void registerPrefix(TokenType tokenType, PrefixParseFn fn) {
+		this.prefixParseFns.put(tokenType, fn);
+	}
+
+	public void registerInfix(TokenType tokenType, InfixParseFn fn) {
+		this.infixParseFns.put(tokenType, fn);
+	}
 }
