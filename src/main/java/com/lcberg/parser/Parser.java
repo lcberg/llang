@@ -10,6 +10,7 @@ import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
 import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
+import com.lcberg.ast.PrefixExpression;
 import com.lcberg.ast.ReturnStatement;
 import com.lcberg.ast.Statement;
 import com.lcberg.lexer.Lexer;
@@ -33,9 +34,26 @@ public class Parser {
 
 		this.registerPrefix(TokenType.IDENT, this::parseIdentifier);
 		this.registerPrefix(TokenType.INT, this::parseIntegerLiteral);
+		this.registerPrefix(TokenType.BANG, this::parsePrefixExpression);
+		this.registerPrefix(TokenType.MINUS, this::parsePrefixExpression);
 
 		NextToken();
 		NextToken();
+	}
+
+	// handles both minus and ! as prefixes
+	public PrefixExpression parsePrefixExpression() {
+		PrefixExpression prefixExpression = new PrefixExpression(this.currentToken, this.currentToken.Literal);
+
+		this.NextToken();
+
+		prefixExpression.right = parseExpression(Precedence.PREFIX);
+		return prefixExpression;
+	}
+
+	public void noPrefixParseFnError(TokenType tokenType) {
+		String message = String.format("No prefix parse function for %s found", tokenType);
+		this.errors.add(message);
 	}
 
 	public Expression parseIdentifier() {
@@ -99,7 +117,7 @@ public class Parser {
 			PrefixParseFn fn = this.prefixParseFns.get(this.currentToken.Type);
 			return fn.parse();
 		}
-
+		this.noPrefixParseFnError(this.currentToken.Type);
 		return null;
 	}
 

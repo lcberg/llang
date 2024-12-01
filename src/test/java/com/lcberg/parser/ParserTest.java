@@ -4,13 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import com.lcberg.ast.Ast;
+import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
 import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
+import com.lcberg.ast.PrefixExpression;
 import com.lcberg.ast.ReturnStatement;
 import com.lcberg.ast.Statement;
 import com.lcberg.lexer.Lexer;
@@ -103,9 +107,9 @@ public class ParserTest {
 		if (parser.errors.size() == 0)
 			return;
 
-		System.err.printf("Parser has %d errors", parser.errors.size());
+		System.out.printf("Parser has %d errors", parser.errors.size());
 		for (String error : parser.errors) {
-			System.err.printf("Parser error: %s \n", error);
+			System.out.printf("Parser error: %s \n", error);
 		}
 		fail("Parser had errors");
 	}
@@ -144,5 +148,36 @@ public class ParserTest {
 		IntegerLiteral integerLiteral = (IntegerLiteral) expressionStatement.expression;
 		assertEquals(integerLiteral.value, 5);
 		assertEquals(integerLiteral.TokenLiteral(), "5");
+	}
+
+	@Test
+	public void testParsingPrefixExpression() {
+		record TestCase(String input, String operator, int integerValue) {
+		}
+		;
+		List<TestCase> testCases = List.of(
+				new TestCase("!5;", "!", 5),
+				new TestCase("-15;", "-", 15));
+
+		for (TestCase testCase : testCases) {
+			Lexer lexer = new Lexer(testCase.input());
+			Parser parser = new Parser(lexer);
+			Ast ast = parser.ParseProgram();
+			checkParserErrors(parser);
+			assertEquals(ast.statements.size(), 1);
+			assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
+			ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+			assertTrue(expressionStatement.expression instanceof PrefixExpression);
+			PrefixExpression prefixExpression = (PrefixExpression) expressionStatement.expression;
+			assertEquals(prefixExpression.operator, testCase.operator());
+			testIntegerLiteral(prefixExpression.right, testCase.integerValue());
+		}
+	}
+
+	public void testIntegerLiteral(Expression expression, int value) {
+		assertTrue(expression instanceof IntegerLiteral);
+		IntegerLiteral integerLiteral = (IntegerLiteral) expression;
+		assertEquals(integerLiteral.value, value);
+		assertEquals(integerLiteral.TokenLiteral(), value + "");
 	}
 }
