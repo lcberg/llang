@@ -8,6 +8,7 @@ import com.lcberg.ast.Ast;
 import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
+import com.lcberg.ast.InfixExpression;
 import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
 import com.lcberg.ast.PrefixExpression;
@@ -27,6 +28,18 @@ public class Parser {
 
 	private Map<TokenType, PrefixParseFn> prefixParseFns = new HashMap<TokenType, PrefixParseFn>();
 	private Map<TokenType, InfixParseFn> infixParseFns = new HashMap<TokenType, InfixParseFn>();
+	private Map<TokenType, Precedence> precedenceMap = new HashMap<TokenType, Precedence>();
+
+	private void registerTokenPrecedence() {
+		precedenceMap.put(TokenType.EQUALS, Precedence.EQUALS);
+		precedenceMap.put(TokenType.NOT_EQUALS, Precedence.EQUALS);
+		precedenceMap.put(TokenType.LESS_THAN, Precedence.LESSGREATER);
+		precedenceMap.put(TokenType.GREATER_THAN, Precedence.LESSGREATER);
+		precedenceMap.put(TokenType.PLUS, Precedence.SUM);
+		precedenceMap.put(TokenType.MINUS, Precedence.SUM);
+		precedenceMap.put(TokenType.SLASH, Precedence.PRODUCT);
+		precedenceMap.put(TokenType.ASTERISK, Precedence.PRODUCT);
+	}
 
 	public Parser(Lexer lexer) {
 		this.lexer = lexer;
@@ -37,8 +50,45 @@ public class Parser {
 		this.registerPrefix(TokenType.BANG, this::parsePrefixExpression);
 		this.registerPrefix(TokenType.MINUS, this::parsePrefixExpression);
 
+		this.registerInfix(TokenType.PLUS, this::parseInfixExpression);
+		this.registerInfix(TokenType.MINUS, this::parseInfixExpression);
+		this.registerInfix(TokenType.SLASH, this::parseInfixExpression);
+		this.registerInfix(TokenType.ASTERISK, this::parseInfixExpression);
+		this.registerInfix(TokenType.EQUALS, this::parseInfixExpression);
+		this.registerInfix(TokenType.NOT_EQUALS, this::parseInfixExpression);
+		this.registerInfix(TokenType.LESS_THAN, this::parseInfixExpression);
+		this.registerInfix(TokenType.GREATER_THAN, this::parseInfixExpression);
+
+		this.registerTokenPrecedence();
+
 		NextToken();
 		NextToken();
+	}
+
+	public InfixExpression parseInfixExpression(Expression left) {
+		InfixExpression infixExpression = new InfixExpression(this.currentToken, this.currentToken.Literal, left);
+
+		Precedence precedence = this.currentPrecedence();
+		this.NextToken();
+		infixExpression.right = this.parseExpression(precedence);
+
+		return infixExpression;
+	}
+
+	public Precedence peekPrecedence() {
+		if (this.precedenceMap.containsKey(this.peekToken.Type)) {
+			Precedence precedence = this.precedenceMap.get(this.peekToken.Type);
+			return precedence;
+		}
+		return Precedence.LOWEST;
+	}
+
+	public Precedence currentPrecedence() {
+		if (this.precedenceMap.containsKey(this.currentToken.Type)) {
+			Precedence precedence = this.precedenceMap.get(this.currentToken.Type);
+			return precedence;
+		}
+		return Precedence.LOWEST;
 	}
 
 	// handles both minus and ! as prefixes
@@ -113,12 +163,24 @@ public class Parser {
 	}
 
 	public Expression parseExpression(Precedence precedence) {
-		if (this.prefixParseFns.containsKey(this.currentToken.Type)) {
-			PrefixParseFn fn = this.prefixParseFns.get(this.currentToken.Type);
-			return fn.parse();
+		if (!this.prefixParseFns.containsKey(this.currentToken.Type)) {
+			this.noPrefixParseFnError(this.currentToken.Type);
+			return null;
 		}
-		this.noPrefixParseFnError(this.currentToken.Type);
-		return null;
+		PrefixParseFn prefix = this.prefixParseFns.get(this.currentToken.Type);
+		Expression left = prefix.parse();
+
+		while (!this.peekTokenIs(TokenType.SEMICOLON) && precedence.getValue() < this.peekPrecedence().getValue()) {
+			if (this.infixParseFns.containsKey(this.peekToken.Type)) {
+				InfixParseFn infix = this.infixParseFns.get(this.peekToken.Type);
+				this.NextToken();
+				left = infix.parse(left);
+
+			} else
+				return left;
+		}
+
+		return left;
 	}
 
 	public ReturnStatement parseReturnStatement() {

@@ -12,6 +12,7 @@ import com.lcberg.ast.Ast;
 import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
+import com.lcberg.ast.InfixExpression;
 import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
 import com.lcberg.ast.PrefixExpression;
@@ -164,6 +165,7 @@ public class ParserTest {
 			Parser parser = new Parser(lexer);
 			Ast ast = parser.ParseProgram();
 			checkParserErrors(parser);
+
 			assertEquals(ast.statements.size(), 1);
 			assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
 			ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
@@ -179,5 +181,37 @@ public class ParserTest {
 		IntegerLiteral integerLiteral = (IntegerLiteral) expression;
 		assertEquals(integerLiteral.value, value);
 		assertEquals(integerLiteral.TokenLiteral(), value + "");
+	}
+
+	@Test
+	public void testParsingInfixExpressions() {
+		record TestCase(String input, int leftValue, String operator, int rightValue) {
+		}
+		List<TestCase> testCases = List.of(
+				new TestCase("5 + 5;", 5, "+", 5),
+				new TestCase("5 - 5;", 5, "-", 5),
+				new TestCase("5 * 5;", 5, "*", 5),
+				new TestCase("5 / 5;", 5, "/", 5),
+				new TestCase("5 > 5;", 5, ">", 5),
+				new TestCase("5 < 5;", 5, "<", 5),
+				new TestCase("5 == 5;", 5, "==", 5),
+				new TestCase("5 != 5;", 5, "!=", 5));
+
+		for (TestCase testCase : testCases) {
+			Lexer lexer = new Lexer(testCase.input());
+			Parser parser = new Parser(lexer);
+			Ast ast = parser.ParseProgram();
+			checkParserErrors(parser);
+
+			assertEquals(ast.statements.size(), 1);
+
+			assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
+			ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+			assertTrue(expressionStatement.expression instanceof InfixExpression);
+			InfixExpression infixExpression = (InfixExpression) expressionStatement.expression;
+			testIntegerLiteral(infixExpression.left, testCase.leftValue());
+			assertEquals(testCase.operator, infixExpression.operator);
+			testIntegerLiteral(infixExpression.right, testCase.rightValue());
+		}
 	}
 }
