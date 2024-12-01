@@ -8,6 +8,7 @@ import com.lcberg.ast.Ast;
 import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
+import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
 import com.lcberg.ast.ReturnStatement;
 import com.lcberg.ast.Statement;
@@ -31,6 +32,7 @@ public class Parser {
 		this.errors = new ArrayList<String>();
 
 		this.registerPrefix(TokenType.IDENT, this::parseIdentifier);
+		this.registerPrefix(TokenType.INT, this::parseIntegerLiteral);
 
 		NextToken();
 		NextToken();
@@ -131,6 +133,18 @@ public class Parser {
 		}
 
 		return letStatement;
+	}
+
+	public IntegerLiteral parseIntegerLiteral() {
+		try {
+			int value = Integer.parseInt(this.currentToken.Literal);
+			return new IntegerLiteral(value, this.currentToken);
+		} catch (NumberFormatException e) {
+			String message = String.format("Tried parsing an integer which was not parsable. Got %s\n",
+					this.currentToken.Literal);
+			this.errors.add(message);
+			return null;
+		}
 	}
 
 	public boolean currentTokenIs(TokenType type) {

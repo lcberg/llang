@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import com.lcberg.ast.Ast;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
+import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
 import com.lcberg.ast.ReturnStatement;
 import com.lcberg.ast.Statement;
@@ -125,5 +126,23 @@ public class ParserTest {
 		Identifier identifier = (Identifier) expressionStatement.expression;
 		assertEquals("foobar", identifier.value);
 		assertEquals("foobar", identifier.TokenLiteral());
+	}
+
+	@Test
+	public void testIntegerLiteralExpression() {
+		String input = "5;";
+
+		Lexer lexer = new Lexer(input);
+		Parser parser = new Parser(lexer);
+		Ast ast = parser.ParseProgram();
+		checkParserErrors(parser);
+
+		assertEquals(ast.statements.size(), 1);
+		assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
+		ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+		assertTrue(expressionStatement.expression instanceof IntegerLiteral);
+		IntegerLiteral integerLiteral = (IntegerLiteral) expressionStatement.expression;
+		assertEquals(integerLiteral.value, 5);
+		assertEquals(integerLiteral.TokenLiteral(), "5");
 	}
 }
