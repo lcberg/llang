@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.lcberg.ast.Ast;
+import com.lcberg.ast.BooleanLiteral;
 import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
@@ -273,5 +274,28 @@ public class ParserTest {
 
 		assertEquals(infixExpression.operator, operator);
 		testLiteralExpression(infixExpression.right, right);
+	}
+
+	@Test
+	public void testBooleanExpression() {
+		record TestCase(String input, Boolean expectedValue) {
+		}
+		List<TestCase> testCases = List.of(
+				new TestCase("true;", true),
+				new TestCase("false;", false));
+
+		for (TestCase testCase : testCases) {
+			Lexer lexer = new Lexer(testCase.input);
+			Parser parser = new Parser(lexer);
+			Ast ast = parser.ParseProgram();
+			checkParserErrors(parser);
+
+			assertEquals(ast.statements.size(), 1);
+			assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
+			ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+			assertTrue(expressionStatement.expression instanceof BooleanLiteral);
+			BooleanLiteral boolean1 = (BooleanLiteral) expressionStatement.expression;
+			assertEquals(boolean1.value, testCase.expectedValue);
+		}
 	}
 }

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.lcberg.ast.Ast;
+import com.lcberg.ast.BooleanLiteral;
 import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
@@ -49,6 +50,8 @@ public class Parser {
 		this.registerPrefix(TokenType.INT, this::parseIntegerLiteral);
 		this.registerPrefix(TokenType.BANG, this::parsePrefixExpression);
 		this.registerPrefix(TokenType.MINUS, this::parsePrefixExpression);
+		this.registerPrefix(TokenType.TRUE, this::parseBooleanLiteral);
+		this.registerPrefix(TokenType.FALSE, this::parseBooleanLiteral);
 
 		this.registerInfix(TokenType.PLUS, this::parseInfixExpression);
 		this.registerInfix(TokenType.MINUS, this::parseInfixExpression);
@@ -215,6 +218,10 @@ public class Parser {
 			this.errors.add(message);
 			return null;
 		}
+	}
+
+	public BooleanLiteral parseBooleanLiteral() {
+		return new BooleanLiteral(this.currentToken, this.currentTokenIs(TokenType.TRUE));
 	}
 
 	public boolean currentTokenIs(TokenType type) {
