@@ -241,4 +241,37 @@ public class ParserTest {
 			assertEquals(ast.String(), testCase.expected());
 		}
 	}
+
+	@Test
+	public void testIdentifier(Expression expression, String value) {
+		assertTrue(expression instanceof Identifier);
+		Identifier identifier = (Identifier) expression;
+
+		assertEquals(identifier.value, value);
+		assertEquals(identifier.TokenLiteral(), value);
+	}
+
+	@Test
+	public void testLiteralExpression(
+			Expression expression, Object expected) {
+		if (expected instanceof Integer) {
+			testIntegerLiteral(expression, ((Integer) expected));
+		} else if (expected instanceof Long) {
+			testIntegerLiteral(expression, (Integer) expected);
+		} else if (expected instanceof String) {
+			testIdentifier(expression, (String) expected);
+		}
+		fail("Type of exp not handled. Got " + expected.getClass().getSimpleName());
+	}
+
+	@Test
+	public void testInfixExpression(Expression expression, Object left, String operator, Object right) {
+		assertTrue(expression instanceof InfixExpression);
+		InfixExpression infixExpression = (InfixExpression) expression;
+
+		testLiteralExpression(infixExpression.left, left);
+
+		assertEquals(infixExpression.operator, operator);
+		testLiteralExpression(infixExpression.right, right);
+	}
 }
