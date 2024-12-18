@@ -154,12 +154,14 @@ public class ParserTest {
 
 	@Test
 	public void testParsingPrefixExpression() {
-		record TestCase(String input, String operator, int integerValue) {
+		record TestCase(String input, String operator, Object expectedValue) {
 		}
 		;
 		List<TestCase> testCases = List.of(
 				new TestCase("!5;", "!", 5),
-				new TestCase("-15;", "-", 15));
+				new TestCase("-15;", "-", 15),
+				new TestCase("!true;", "!", true),
+				new TestCase("!false;", "!", false));
 
 		for (TestCase testCase : testCases) {
 			Lexer lexer = new Lexer(testCase.input());
@@ -170,10 +172,11 @@ public class ParserTest {
 			assertEquals(ast.statements.size(), 1);
 			assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
 			ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+
 			assertTrue(expressionStatement.expression instanceof PrefixExpression);
 			PrefixExpression prefixExpression = (PrefixExpression) expressionStatement.expression;
 			assertEquals(prefixExpression.operator, testCase.operator());
-			testIntegerLiteral(prefixExpression.right, testCase.integerValue());
+			testLiteralExpression(prefixExpression.right, testCase.expectedValue);
 		}
 	}
 
@@ -186,7 +189,7 @@ public class ParserTest {
 
 	@Test
 	public void testParsingInfixExpressions() {
-		record TestCase(String input, int leftValue, String operator, int rightValue) {
+		record TestCase(String input, Object leftValue, String operator, Object rightValue) {
 		}
 		List<TestCase> testCases = List.of(
 				new TestCase("5 + 5;", 5, "+", 5),
@@ -196,7 +199,10 @@ public class ParserTest {
 				new TestCase("5 > 5;", 5, ">", 5),
 				new TestCase("5 < 5;", 5, "<", 5),
 				new TestCase("5 == 5;", 5, "==", 5),
-				new TestCase("5 != 5;", 5, "!=", 5));
+				new TestCase("5 != 5;", 5, "!=", 5),
+				new TestCase("true == true", true, "==", true),
+				new TestCase("true != false", true, "!=", false),
+				new TestCase("false == false", false, "==", false));
 
 		for (TestCase testCase : testCases) {
 			Lexer lexer = new Lexer(testCase.input());
@@ -208,11 +214,9 @@ public class ParserTest {
 
 			assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
 			ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
-			assertTrue(expressionStatement.expression instanceof InfixExpression);
-			InfixExpression infixExpression = (InfixExpression) expressionStatement.expression;
-			testIntegerLiteral(infixExpression.left, testCase.leftValue());
-			assertEquals(testCase.operator, infixExpression.operator);
-			testIntegerLiteral(infixExpression.right, testCase.rightValue());
+
+			testInfixExpression(expressionStatement.expression, testCase.leftValue(), testCase.operator,
+					testCase.rightValue());
 		}
 	}
 
@@ -231,7 +235,11 @@ public class ParserTest {
 				new TestCase("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
 				new TestCase("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
 				new TestCase("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
-				new TestCase("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"));
+				new TestCase("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+				new TestCase("true", "true"),
+				new TestCase("false", "false"),
+				new TestCase("3 > 5 == false", "((3 > 5) == false)"),
+				new TestCase("3 < 5 == true", "((3 < 5) == true)"));
 
 		for (TestCase testCase : testCases) {
 			Lexer lexer = new Lexer(testCase.input());
@@ -261,8 +269,10 @@ public class ParserTest {
 			testIntegerLiteral(expression, (Integer) expected);
 		} else if (expected instanceof String) {
 			testIdentifier(expression, (String) expected);
-		}
-		fail("Type of exp not handled. Got " + expected.getClass().getSimpleName());
+		} else if (expected instanceof Boolean) {
+			testBooleanLiteral(expression, (Boolean) expected);
+		} else
+			fail("Type of exp not handled. Got " + expected.getClass().getSimpleName());
 	}
 
 	@Test
@@ -297,5 +307,12 @@ public class ParserTest {
 			BooleanLiteral boolean1 = (BooleanLiteral) expressionStatement.expression;
 			assertEquals(boolean1.value, testCase.expectedValue);
 		}
+	}
+
+	public void testBooleanLiteral(Expression expression, Boolean value) {
+		assertTrue(expression instanceof BooleanLiteral);
+		BooleanLiteral booleanLiteral = (BooleanLiteral) expression;
+		assertEquals(booleanLiteral.value, value);
+		assertEquals(booleanLiteral.TokenLiteral(), value.toString());
 	}
 }
