@@ -52,6 +52,7 @@ public class Parser {
 		this.registerPrefix(TokenType.MINUS, this::parsePrefixExpression);
 		this.registerPrefix(TokenType.TRUE, this::parseBooleanLiteral);
 		this.registerPrefix(TokenType.FALSE, this::parseBooleanLiteral);
+		this.registerPrefix(TokenType.LPAREN, this::parseGroupedExpression);
 
 		this.registerInfix(TokenType.PLUS, this::parseInfixExpression);
 		this.registerInfix(TokenType.MINUS, this::parseInfixExpression);
@@ -94,6 +95,18 @@ public class Parser {
 
 		prefixExpression.right = parseExpression(Precedence.PREFIX);
 		return prefixExpression;
+	}
+
+	public Expression parseGroupedExpression() {
+		this.NextToken();
+
+		Expression expression = this.parseExpression(Precedence.LOWEST);
+
+		if (!this.expectPeek(TokenType.RPAREN)) {
+			return null;
+		}
+
+		return expression;
 	}
 
 	public void noPrefixParseFnError(TokenType tokenType) {
