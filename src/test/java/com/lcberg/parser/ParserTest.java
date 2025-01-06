@@ -1,6 +1,8 @@
 package com.lcberg.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -13,6 +15,7 @@ import com.lcberg.ast.BooleanLiteral;
 import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
+import com.lcberg.ast.IfExpression;
 import com.lcberg.ast.InfixExpression;
 import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
@@ -256,7 +259,6 @@ public class ParserTest {
 		}
 	}
 
-	@Test
 	public void testIdentifier(Expression expression, String value) {
 		assertTrue(expression instanceof Identifier);
 		Identifier identifier = (Identifier) expression;
@@ -265,7 +267,6 @@ public class ParserTest {
 		assertEquals(identifier.TokenLiteral(), value);
 	}
 
-	@Test
 	public void testLiteralExpression(
 			Expression expression, Object expected) {
 		if (expected instanceof Integer) {
@@ -280,7 +281,6 @@ public class ParserTest {
 			fail("Type of exp not handled. Got " + expected.getClass().getSimpleName());
 	}
 
-	@Test
 	public void testInfixExpression(Expression expression, Object left, String operator, Object right) {
 		assertTrue(expression instanceof InfixExpression);
 		InfixExpression infixExpression = (InfixExpression) expression;
@@ -312,6 +312,68 @@ public class ParserTest {
 			BooleanLiteral boolean1 = (BooleanLiteral) expressionStatement.expression;
 			assertEquals(boolean1.value, testCase.expectedValue);
 		}
+	}
+
+	@Test
+	public void testIfExpression() {
+		String input = "if (x < y) { x }";
+
+		Lexer lexer = new Lexer(input);
+		Parser parser = new Parser(lexer);
+		Ast ast = parser.ParseProgram();
+		checkParserErrors(parser);
+
+		assertEquals(ast.statements.size(), 1);
+		assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
+
+		ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+		assertTrue(expressionStatement.expression instanceof IfExpression);
+		IfExpression ifExpression = (IfExpression) expressionStatement.expression;
+
+		testInfixExpression(ifExpression.condition, "x", "<", "y");
+
+		assertEquals(ifExpression.consequence.statements.size(), 1);
+
+		assertTrue(ifExpression.consequence.statements.get(0) instanceof ExpressionStatement);
+		ExpressionStatement consequenceExpressionStatement = (ExpressionStatement) ifExpression.consequence.statements
+				.get(0);
+		testIdentifier(consequenceExpressionStatement.expression, "x");
+
+		assertNull(ifExpression.alternative);
+	}
+
+	@Test
+	public void testIfElseExpression() {
+		String input = "if (x < y) { x } else { y }";
+		Lexer lexer = new Lexer(input);
+		Parser parser = new Parser(lexer);
+		Ast ast = parser.ParseProgram();
+		checkParserErrors(parser);
+
+		assertEquals(ast.statements.size(), 1);
+		assertTrue(ast.statements.get(0) instanceof ExpressionStatement);
+
+		ExpressionStatement expressionStatement = (ExpressionStatement) ast.statements.get(0);
+		assertTrue(expressionStatement.expression instanceof IfExpression);
+		IfExpression ifExpression = (IfExpression) expressionStatement.expression;
+
+		testInfixExpression(ifExpression.condition, "x", "<", "y");
+
+		assertEquals(ifExpression.consequence.statements.size(), 1);
+
+		assertTrue(ifExpression.consequence.statements.get(0) instanceof ExpressionStatement);
+		ExpressionStatement consequenceExpressionStatement = (ExpressionStatement) ifExpression.consequence.statements
+				.get(0);
+		testIdentifier(consequenceExpressionStatement.expression, "x");
+
+		assertNotNull(ifExpression.alternative);
+		assertEquals(ifExpression.alternative.statements.size(), 1);
+
+		assertTrue(ifExpression.alternative.statements.get(0) instanceof ExpressionStatement);
+
+		ExpressionStatement alternativeExpressionStatement = (ExpressionStatement) ifExpression.alternative.statements
+				.get(0);
+		testIdentifier(alternativeExpressionStatement.expression, "y");
 	}
 
 	public void testBooleanLiteral(Expression expression, Boolean value) {

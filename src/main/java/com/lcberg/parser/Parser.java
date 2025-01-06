@@ -5,10 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.lcberg.ast.Ast;
+import com.lcberg.ast.BlockStatement;
 import com.lcberg.ast.BooleanLiteral;
 import com.lcberg.ast.Expression;
 import com.lcberg.ast.ExpressionStatement;
 import com.lcberg.ast.Identifier;
+import com.lcberg.ast.IfExpression;
 import com.lcberg.ast.InfixExpression;
 import com.lcberg.ast.IntegerLiteral;
 import com.lcberg.ast.LetStatement;
@@ -53,6 +55,7 @@ public class Parser {
 		this.registerPrefix(TokenType.TRUE, this::parseBooleanLiteral);
 		this.registerPrefix(TokenType.FALSE, this::parseBooleanLiteral);
 		this.registerPrefix(TokenType.LPAREN, this::parseGroupedExpression);
+		this.registerPrefix(TokenType.IF, this::parseIfExpression);
 
 		this.registerInfix(TokenType.PLUS, this::parseInfixExpression);
 		this.registerInfix(TokenType.MINUS, this::parseInfixExpression);
@@ -95,6 +98,47 @@ public class Parser {
 
 		prefixExpression.right = parseExpression(Precedence.PREFIX);
 		return prefixExpression;
+	}
+
+	public Expression parseIfExpression() {
+		IfExpression ifExpression = new IfExpression(this.currentToken);
+
+		if (!this.expectPeek(TokenType.LPAREN))
+			return null;
+
+		this.NextToken();
+		ifExpression.condition = this.parseExpression(Precedence.LOWEST);
+
+		if (!this.expectPeek(TokenType.RPAREN))
+			return null;
+		if (!this.expectPeek(TokenType.LBRACE))
+			return null;
+
+		ifExpression.consequence = this.parseBlockStatement();
+
+		if (this.peekTokenIs(TokenType.ELSE)) {
+			this.NextToken();
+
+			if (!this.expectPeek(TokenType.LBRACE))
+				return null;
+			ifExpression.alternative = this.parseBlockStatement();
+		}
+
+		return ifExpression;
+	}
+
+	public BlockStatement parseBlockStatement() {
+		BlockStatement blockStatement = new BlockStatement(this.currentToken);
+
+		this.NextToken();
+
+		while (!this.currentTokenIs(TokenType.RBRACE) && !this.currentTokenIs(TokenType.EOF)) {
+			Statement statement = this.parseStatement();
+			if (statement != null)
+				blockStatement.statements.add(statement);
+			this.NextToken();
+		}
+		return blockStatement;
 	}
 
 	public Expression parseGroupedExpression() {
